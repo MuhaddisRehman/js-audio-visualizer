@@ -4,7 +4,7 @@
     box-sizing: border-box;
 }
 #container{
-    background: #000;
+    /* background: #000; */
     position: absolute;
     top: 0;
     left: 0;
@@ -28,4 +28,13 @@
     position: absolute;
     top: 150px;
     z-index: 100;
+}
+#stopButton{
+    left: 100px;
+}
+button{
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10000;
 }

@@ -17,6 +17,7 @@ let hue = 0;
 
 
 
+
 audioSrc = audioCtx.createMediaElementSource(audio1);
 analyser = audioCtx.createAnalyser();
 audioSrc.connect(analyser);
@@ -59,7 +60,9 @@ const drawVisualizer = (bufferLength, x, barWidth, barHeight, dataArray)=>{
         const blue = barHeight/ 2;
         ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
         ctx.beginPath();
-        ctx.fillRect(canvas.width/2-x, canvas.height-barHeight, barWidth, barHeight)
+        ctx.arc(canvas.width/2-x-1, canvas.height-barHeight, barHeight/20, 0, Math.PI * 2 )
+        ctx.fill()
+        ctx.fillRect(canvas.width/2-x, canvas.height-barHeight, barWidth/2, barHeight)
         x += barWidth;
     }
     for (let i = 0; i < bufferLength; i++) {
@@ -71,7 +74,82 @@ const drawVisualizer = (bufferLength, x, barWidth, barHeight, dataArray)=>{
         const blue = barHeight/ 2;
         ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
         ctx.beginPath();
-        ctx.fillRect(x, canvas.height-barHeight, barWidth, barHeight)
+        ctx.arc(x+1, canvas.height-barHeight, barHeight/20, 0, Math.PI * 2 )
+        ctx.fillRect(x, canvas.height-barHeight, barWidth/2, barHeight)
+        ctx.fill()
         x += barWidth;
     }
+}
+
+
+
+
+
+// Define variables
+let audioContext;
+let audioStream;
+let clapNode;
+
+// Get start and stop buttons
+const startButton = document.getElementById('startButton');
+const stopButton = document.getElementById('stopButton');
+
+// Add event listeners to buttons
+startButton.addEventListener('click', startRecording);
+stopButton.addEventListener('click', stopRecording);
+
+// Function to handle start recording button click
+function startRecording() {
+  // Check browser support
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('getUserMedia is not supported on your browser');
+    return;
+  }
+
+  // Create an audio context
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Get user media (microphone)
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      // Store the audio stream
+      audioStream = stream;
+
+      // Create an instance of the audio worklet node
+      audioContext.audioWorklet.addModule('clap-processor.js')
+        .then(() => {
+          clapNode = new AudioWorkletNode(audioContext, 'clap-processor');
+
+          // Connect the audio stream to the clap node
+          const microphone = audioContext.createMediaStreamSource(audioStream);
+          microphone.connect(clapNode);
+
+          // Event listener for clap detection
+          clapNode.port.onmessage = (event) => {
+            if (event.data === 'clap') {
+              // Clap detected!
+              console.log('Clap detected!');
+              hue += 100;
+              canvas.style.backgroundColor =`hsl(${hue}, 100%, 50%)` ;
+              // Perform additional actions or logic here
+            }
+          };
+        })
+        .catch((error) => {
+          console.error('Error setting up the audio worklet:', error);
+        });
+    })
+    .catch(error => {
+      console.error('Error accessing microphone:', error);
+    });
+}
+
+// Function to handle stop recording button click
+function stopRecording() {
+  // Stop the audio stream tracks
+  audioStream.getTracks().forEach(track => track.stop());
+
+  // Disconnect the audio nodes
+  clapNode.disconnect();
+  audioContext.close();
 }
