@@ -60,7 +60,7 @@ const drawVisualizer = (bufferLength, x, barWidth, barHeight, dataArray)=>{
         ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
         ctx.beginPath();
         ctx.fillRect(canvas.width/2-x, canvas.height-barHeight, barWidth, barHeight)
-        x += barWidth+0.1;
+        x += barWidth;
     }
     for (let i = 0; i < bufferLength; i++) {
         console.log("as");
